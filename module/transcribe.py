@@ -11,14 +11,18 @@ def download_youtube_audio(youtube_url, output_path="audio.mp3",i=0):
         output_path=f"{i}{output_path}"
         
         command = [
-            "yt-dlp",
+           "yt-dlp",
             "-f", "bestaudio/best",
+            #  START ADDITIONS FOR STABILITY during deployment
+            "--no-check-certificate",  # Ignores certificate errors sometimes caused by proxies
+            "--no-cache-dir",          # Prevents issues with corrupted cache files on shared hosts
+            #  END ADDITIONS 
             "--extract-audio",
             "--audio-format", "mp3",
             "--output", output_path,
             youtube_url
         ]
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True, timeout=60)
         print(f"Audio downloaded and saved as {output_path}")
         return output_path
     except subprocess.CalledProcessError as e:
