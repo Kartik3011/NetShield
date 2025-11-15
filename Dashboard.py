@@ -2,10 +2,10 @@ import streamlit as st
 import groq 
 import os 
 
-# streamlit page configuration
+
 st.set_page_config(page_title="NetShield Dashboard", layout="wide")
 
-# Custom CSS
+
 st.markdown("""
     <style>
     
