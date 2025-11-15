@@ -1,0 +1,15 @@
+first update pip in your system, then run this:
+
+cd C:\Users\_USERNAME_\Desktop\netshield
+
+then:
+
+pip install -r requirements.txt --user
+
+then:
+
+python -m streamlit run Dashboard.py
+
+download ffmpeg and save 2 files in netshield folder then assign destination 
+ffmpeg and ffprobe
+also save yt-dlp python file in netshield folder from your installed python .bin which should be in C disk

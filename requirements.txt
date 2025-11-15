@@ -1,0 +1,10 @@
+streamlit
+pandas
+requests
+google-api-python-client
+beautifulsoup4
+assemblyai
+openai
+plotly-express
+altair
+yt-dlp
