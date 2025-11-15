@@ -11,7 +11,7 @@ def download_youtube_audio(youtube_url, output_path="audio.mp3",i=0):
         output_path=f"{i}{output_path}"
         
         command = [
-            "yt-dlp.exe",
+            "yt-dlp",
             "-f", "bestaudio/best",
             "--extract-audio",
             "--audio-format", "mp3",
