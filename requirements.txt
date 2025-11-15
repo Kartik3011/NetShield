@@ -7,4 +7,5 @@ assemblyai
 openai
 plotly-express
 altair
+groq
 yt-dlp
