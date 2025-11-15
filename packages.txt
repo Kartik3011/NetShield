@@ -1,0 +1,4 @@
+List of non-Python dependencies (installed via apt-get)
+
+ffmpeg
+yt-dlp
