@@ -3,7 +3,7 @@ import subprocess
 import assemblyai as aai
 import streamlit as st
 import tempfile 
-import yt_dlp # <-- Required library for direct use of downloader
+import yt_dlp # CRITICAL: Direct import to bypass subprocess/shell errors
 import time
 
 # Set the AssemblyAI API key from Streamlit secrets
@@ -21,18 +21,18 @@ def download_youtube_audio(youtube_url, i=0):
     # 1. Define a clean, fixed path for the cookies file
     cookies_path = os.path.join(temp_dir, f"cookies_{i}.txt")
     
+    # Define the fixed, simple output file path
+    final_output_path = os.path.join(temp_dir, f"video_{i}_audio.mp3")
+
     try:
         # 2. Retrieve and write cookie data cleanly to ensure Netscape format
         cookie_data = st.secrets["YOUTUBE_COOKIES"]
         
-        # Use simple open() to write the data without tempfile overhead
+        # Use simple open() to write the data without tempfile overhead, preserving format
         with open(cookies_path, 'w', encoding='utf-8') as f:
             f.write(cookie_data)
             
-        # 3. Define the fixed, simple output file path for the audio
-        final_output_path = os.path.join(temp_dir, f"video_{i}_audio.mp3")
-
-        # 4. Configuration for yt-dlp library
+        # 3. Configuration for yt-dlp library (must be installed via requirements.txt)
         ydl_opts = {
             'format': 'bestaudio/best', 
             'extract_audio': True, 
@@ -40,10 +40,8 @@ def download_youtube_audio(youtube_url, i=0):
             'outtmpl': final_output_path, 
             'noplaylist': True,
             'quiet': True,
-            # Pass the cookie file path
-            'cookiefile': cookies_path, 
+            'cookiefile': cookies_path, # Pass the clean cookie file path
             'writethumbnail': False,
-            # Ensures FFmpeg is used to convert to mp3 (requires system FFmpeg)
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -53,12 +51,18 @@ def download_youtube_audio(youtube_url, i=0):
 
         print(f"Downloading audio from: {youtube_url} to {final_output_path}")
         
-        # 5. Execute download using the yt-dlp library
+        # 4. Execute download using the yt-dlp library
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([youtube_url])
         
-        print(f"Audio downloaded and saved as {final_output_path}")
-        return final_output_path
+        
+        # 5. CRITICAL FINAL CHECK: Verify file existence before returning path
+        if os.path.exists(final_output_path):
+            print(f"Audio downloaded and saved as {final_output_path}")
+            return final_output_path
+        else:
+            print(f"Download completed, but final file not found at {final_output_path}. Inspect logs.")
+            return None
 
     except yt_dlp.utils.DownloadError as e:
         print(f"yt-dlp Download Error: {e}")
@@ -72,7 +76,7 @@ def download_youtube_audio(youtube_url, i=0):
             os.remove(cookies_path)
 
 
-# This function was missing in the original code, causing the initial error
+# This function was missing in the original module, causing the initial AttributeError
 @st.cache_data(show_spinner=False)
 def transcript(url, video_index):
     """
