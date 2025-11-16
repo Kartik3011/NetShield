@@ -10,14 +10,21 @@ def download_youtube_audio(youtube_url, output_path="audio.mp3",i=0):
         print(f"Downloading audio from: {youtube_url}")
         output_path=f"{i}{output_path}"
         
+      # \START OF COOKIES FIX for streamlit deploymentt
+        # 1. Define the path to the cookies file
+        cookies_path = os.path.join(os.getcwd(), "cookies.txt")
+
+        # 2. Add the --cookies argument to the yt-dlp command
         command = [
             "yt-dlp",
+            "--cookies", cookies_path, \
             "-f", "bestaudio/best",
             "--extract-audio",
             "--audio-format", "mp3",
             "--output", output_path,
             youtube_url
         ]
+        # --- END OF COOKIES FIX 
         subprocess.run(command, check=True)
         print(f"Audio downloaded and saved as {output_path}")
         return output_path
