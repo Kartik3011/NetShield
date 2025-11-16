@@ -3,54 +3,58 @@ import subprocess
 import assemblyai as aai
 import streamlit as st
 import tempfile 
-import yt_dlp 
+import yt_dlp # <-- Required library for direct use of downloader
+import time
 
 # Set the AssemblyAI API key from Streamlit secrets
 try:
     aai.settings.api_key = st.secrets["ASSEMBLYAI_API_KEY"]
 except KeyError:
+    # Handle missing key gracefully if run outside of a Streamlit environment
     st.error("ASSEMBLYAI_API_KEY not found in st.secrets.")
     aai.settings.api_key = "DUMMY_KEY" 
 
-# Using the library directly avoids the 'Argument list too long' shell error.
+
 def download_youtube_audio(youtube_url, i=0):
     
-    # 1. Securely handle cookies for yt-dlp to read
-    cookie_data = st.secrets["YOUTUBE_COOKIES"]
-    tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-    tmp_file.write(cookie_data)
-    cookies_path = tmp_file.name
-    tmp_file.close() 
-
     temp_dir = tempfile.gettempdir()
-    # Define the fixed, simple output file path
-    final_output_path = os.path.join(temp_dir, f"video_{i}_audio.mp3")
-
-    # --- CRITICAL FIX: Use YoutubeDL class directly ---
-    ydl_opts = {
-        # Audio extraction options
-        'format': 'bestaudio/best', 
-        'extract_audio': True, 
-        'audioformat': "mp3", 
-        'outtmpl': final_output_path, # Define the output path template
-        'noplaylist': True,
-        'quiet': True, # Suppress console output for cleaner logs
-        # Authentication/Cookie fix
-        'cookiefile': cookies_path, 
-        # Prevent Argument list too long error
-        'writethumbnail': False,
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-    }
-
+    # 1. Define a clean, fixed path for the cookies file
+    cookies_path = os.path.join(temp_dir, f"cookies_{i}.txt")
+    
     try:
+        # 2. Retrieve and write cookie data cleanly to ensure Netscape format
+        cookie_data = st.secrets["YOUTUBE_COOKIES"]
+        
+        # Use simple open() to write the data without tempfile overhead
+        with open(cookies_path, 'w', encoding='utf-8') as f:
+            f.write(cookie_data)
+            
+        # 3. Define the fixed, simple output file path for the audio
+        final_output_path = os.path.join(temp_dir, f"video_{i}_audio.mp3")
+
+        # 4. Configuration for yt-dlp library
+        ydl_opts = {
+            'format': 'bestaudio/best', 
+            'extract_audio': True, 
+            'audioformat': "mp3", 
+            'outtmpl': final_output_path, 
+            'noplaylist': True,
+            'quiet': True,
+            # Pass the cookie file path
+            'cookiefile': cookies_path, 
+            'writethumbnail': False,
+            # Ensures FFmpeg is used to convert to mp3 (requires system FFmpeg)
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
+
         print(f"Downloading audio from: {youtube_url} to {final_output_path}")
         
+        # 5. Execute download using the yt-dlp library
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Download the video (it will only extract and save the audio)
             ydl.download([youtube_url])
         
         print(f"Audio downloaded and saved as {final_output_path}")
@@ -63,12 +67,12 @@ def download_youtube_audio(youtube_url, i=0):
         print(f"An unexpected error occurred during audio download setup: {e}")
         return None
     finally:
-        # 3. Clean up: Delete the temporary cookies file
+        # 6. Clean up: Delete the temporary cookies file
         if os.path.exists(cookies_path):
             os.remove(cookies_path)
 
 
-# --- The transcript function (remains the same as previous fix) ---
+# This function was missing in the original code, causing the initial error
 @st.cache_data(show_spinner=False)
 def transcript(url, video_index):
     """
@@ -76,18 +80,17 @@ def transcript(url, video_index):
     """
     print(f"Starting transcription for video index: {video_index}")
     
-    # 1. Download the audio file
+    # 1. Download the audio file using the fixed function
     audio_path = download_youtube_audio(url, i=video_index)
     
     if not audio_path or not os.path.exists(audio_path):
         return "Audio download failed."
         
     try:
-        # 2. Upload the audio file to AssemblyAI
+        # 2. Perform the transcription
         transcriber = aai.Transcriber()
         config = aai.TranscriptionConfig(language_code="en")
         
-        # 3. Perform the transcription
         transcript_obj = transcriber.transcribe(audio_path, config=config)
         
         if transcript_obj.status == aai.TranscriptStatus.error:
@@ -100,6 +103,6 @@ def transcript(url, video_index):
         return f"Transcription service error: {e}"
         
     finally:
-        # 5. Clean up the downloaded audio file
+        # 3. Clean up the downloaded audio file
         if os.path.exists(audio_path):
             os.remove(audio_path)
