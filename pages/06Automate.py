@@ -12,7 +12,7 @@ from module import translate as tst
 from module import identifier as idefy
 import altair as alt
 import os 
-
+import time
 
 st.set_page_config(page_title="NetShield Automation", layout="wide", initial_sidebar_state="expanded")
 
@@ -282,6 +282,7 @@ for i, j in zip(video_Link, video_titles):
 
         k += 1
         processing_bar.progress(int((k * progress_increment)))
+        time.sleep(5)
 
 
 #  Final Report Generation  !!!!!!!!!!
