@@ -4,6 +4,7 @@ from module import nextractor as nx
 import pandas as pd
 from module import transcribe as ts
 import os 
+import time
 
 st.set_page_config(page_title="Content Forensic", layout="wide", initial_sidebar_state="expanded")
 
@@ -164,6 +165,7 @@ try:
         st.markdown("---") 
         
         k = k + 1
+        time.sleep(5)
 
 except FileNotFoundError:
     st.error("Critical error: Could not load data file.")
