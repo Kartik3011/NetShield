@@ -1,38 +1,54 @@
 import os
-import subprocess
 import assemblyai as aai
 import streamlit as st
 import tempfile 
 import yt_dlp # CRITICAL: Direct import to bypass subprocess/shell errors
-import time
+import time # Time import is needed for the sleep function
 
 # Set the AssemblyAI API key from Streamlit secrets
 try:
     aai.settings.api_key = st.secrets["ASSEMBLYAI_API_KEY"]
 except KeyError:
-    # Handle missing key gracefully if run outside of a Streamlit environment
     st.error("ASSEMBLYAI_API_KEY not found in st.secrets.")
     aai.settings.api_key = "DUMMY_KEY" 
+
+# --- NEW FUNCTION TO CLEAN COOKIE DATA ---
+def clean_cookies(raw_cookies: str) -> str:
+    """Aggressively cleans the cookie string to ensure Netscape format integrity."""
+    
+    lines = raw_cookies.splitlines()
+    cleaned_lines = []
+    
+    # Preserve the required Netscape headers and valid cookie lines
+    for line in lines:
+        stripped_line = line.strip()
+        # Keep non-empty lines that are either comments (#) or start with a domain (.youtube.com)
+        if stripped_line and (stripped_line.startswith('#') or stripped_line.startswith('.')):
+             cleaned_lines.append(line) # Keep the original line spacing/tabs
+             
+    # Join them back together with a standard newline
+    return '\n'.join(cleaned_lines)
+# ----------------------------------------
 
 
 def download_youtube_audio(youtube_url, i=0):
     
     temp_dir = tempfile.gettempdir()
-    # 1. Define a clean, fixed path for the cookies file
     cookies_path = os.path.join(temp_dir, f"cookies_{i}.txt")
-    
-    # Define the fixed, simple output file path
     final_output_path = os.path.join(temp_dir, f"video_{i}_audio.mp3")
 
     try:
-        # 2. Retrieve and write cookie data cleanly to ensure Netscape format
-        cookie_data = st.secrets["YOUTUBE_COOKIES"]
+        # 1. Retrieve raw cookie data
+        raw_cookie_data = st.secrets["YOUTUBE_COOKIES"]
         
-        # Use simple open() to write the data without tempfile overhead, preserving format
+        # 2. Clean the cookie data
+        cleaned_cookie_data = clean_cookies(raw_cookie_data)
+        
+        # 3. Write cleaned cookie data to ensure Netscape format integrity
         with open(cookies_path, 'w', encoding='utf-8') as f:
-            f.write(cookie_data)
+            f.write(cleaned_cookie_data)
             
-        # 3. Configuration for yt-dlp library (must be installed via requirements.txt)
+        # 4. Configuration for yt-dlp library
         ydl_opts = {
             'format': 'bestaudio/best', 
             'extract_audio': True, 
@@ -40,7 +56,7 @@ def download_youtube_audio(youtube_url, i=0):
             'outtmpl': final_output_path, 
             'noplaylist': True,
             'quiet': True,
-            'cookiefile': cookies_path, # Pass the clean cookie file path
+            'cookiefile': cookies_path, 
             'writethumbnail': False,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -51,17 +67,17 @@ def download_youtube_audio(youtube_url, i=0):
 
         print(f"Downloading audio from: {youtube_url} to {final_output_path}")
         
-        # 4. Execute download using the yt-dlp library
+        # 5. Execute download using the yt-dlp library
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([youtube_url])
         
         
-        # 5. CRITICAL FINAL CHECK: Verify file existence before returning path
+        # 6. CRITICAL FINAL CHECK: Verify file existence
         if os.path.exists(final_output_path):
             print(f"Audio downloaded and saved as {final_output_path}")
             return final_output_path
         else:
-            print(f"Download completed, but final file not found at {final_output_path}. Inspect logs.")
+            print(f"Download completed, but final file not found at {final_output_path}.")
             return None
 
     except yt_dlp.utils.DownloadError as e:
@@ -71,7 +87,7 @@ def download_youtube_audio(youtube_url, i=0):
         print(f"An unexpected error occurred during audio download setup: {e}")
         return None
     finally:
-        # 6. Clean up: Delete the temporary cookies file
+        # 7. Clean up: Delete the temporary cookies file
         if os.path.exists(cookies_path):
             os.remove(cookies_path)
 
