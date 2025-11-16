@@ -165,7 +165,9 @@ try:
         st.markdown("---") 
         
         k = k + 1
-        time.sleep(5)
+        # --- FIX: Increased delay to 10 seconds to reduce HTTP 429 throttling ---
+        time.sleep(10)
+        # ----------------------------------------------------------------------
 
 except FileNotFoundError:
     st.error("Critical error: Could not load data file.")
