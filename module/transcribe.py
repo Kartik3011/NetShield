@@ -3,9 +3,8 @@ import subprocess
 import assemblyai as aai
 import streamlit as st
 import tempfile 
-import time
+import yt_dlp 
 
-# ... (API Key setup remains the same) ...
 # Set the AssemblyAI API key from Streamlit secrets
 try:
     aai.settings.api_key = st.secrets["ASSEMBLYAI_API_KEY"]
@@ -13,10 +12,10 @@ except KeyError:
     st.error("ASSEMBLYAI_API_KEY not found in st.secrets.")
     aai.settings.api_key = "DUMMY_KEY" 
 
-
+# Using the library directly avoids the 'Argument list too long' shell error.
 def download_youtube_audio(youtube_url, i=0):
     
-    # 1. Securely handle cookies
+    # 1. Securely handle cookies for yt-dlp to read
     cookie_data = st.secrets["YOUTUBE_COOKIES"]
     tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
     tmp_file.write(cookie_data)
@@ -24,31 +23,41 @@ def download_youtube_audio(youtube_url, i=0):
     tmp_file.close() 
 
     temp_dir = tempfile.gettempdir()
-    # Use a simpler, non-dynamic output path for the final file
+    # Define the fixed, simple output file path
     final_output_path = os.path.join(temp_dir, f"video_{i}_audio.mp3")
 
+    # --- CRITICAL FIX: Use YoutubeDL class directly ---
+    ydl_opts = {
+        # Audio extraction options
+        'format': 'bestaudio/best', 
+        'extract_audio': True, 
+        'audioformat': "mp3", 
+        'outtmpl': final_output_path, # Define the output path template
+        'noplaylist': True,
+        'quiet': True, # Suppress console output for cleaner logs
+        # Authentication/Cookie fix
+        'cookiefile': cookies_path, 
+        # Prevent Argument list too long error
+        'writethumbnail': False,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+
     try:
-        print(f"Downloading audio from: {youtube_url}")
+        print(f"Downloading audio from: {youtube_url} to {final_output_path}")
         
-        # --- CRITICAL FIX: MINIMIZE ARGUMENTS AND USE KNOWN OUTPUT PATH ---
-        command = [
-            "yt-dlp",
-            "--cookies", cookies_path,        # Authentication fix
-            "-f", "bestaudio/best",           # Select best audio stream
-            "--extract-audio",                # Extract audio
-            "--audio-format", "mp3",          # Convert to MP3
-            "-o", final_output_path,          # Force output to the fixed path
-            youtube_url
-        ]
-        
-        # Use shell=False (default) and ensure stdout/stderr are hidden for cleaner output
-        subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Download the video (it will only extract and save the audio)
+            ydl.download([youtube_url])
         
         print(f"Audio downloaded and saved as {final_output_path}")
         return final_output_path
 
-    except subprocess.CalledProcessError as e:
-        print(f"Error downloading audio: {e}")
+    except yt_dlp.utils.DownloadError as e:
+        print(f"yt-dlp Download Error: {e}")
         return None
     except Exception as e:
         print(f"An unexpected error occurred during audio download setup: {e}")
@@ -59,10 +68,14 @@ def download_youtube_audio(youtube_url, i=0):
             os.remove(cookies_path)
 
 
-# --- (The transcript function added in the previous response goes here) ---
+# --- The transcript function (remains the same as previous fix) ---
 @st.cache_data(show_spinner=False)
 def transcript(url, video_index):
-    # ... (content of this function remains the same, using the fixed download_youtube_audio)
+    """
+    Downloads audio and transcribes it using AssemblyAI.
+    """
+    print(f"Starting transcription for video index: {video_index}")
+    
     # 1. Download the audio file
     audio_path = download_youtube_audio(url, i=video_index)
     
