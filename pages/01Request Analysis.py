@@ -8,6 +8,11 @@ import os
 
 # function to get lat/lon from city name
 
+# Old code (kartik3011/netshield/NetShield-10c13928453d92cc296ea379993aac57164a3191/pages/01Request Analysis.py):
+# response = requests.get(url, headers=headers, timeout=5)
+
+# New code:
+
 def get_coordinates(city_name):
     """Fetch latitude and longitude for a given city name."""
     url = f'https://nominatim.openstreetmap.org/search?city={city_name}&format=json'
@@ -15,7 +20,8 @@ def get_coordinates(city_name):
         'User-Agent': 'stream/1.0'
     }
     try:
-        response = requests.get(url, headers=headers, timeout=5)
+        # --- FIX: Increased timeout from 5 to 10 seconds ---
+        response = requests.get(url, headers=headers, timeout=10) 
         response.raise_for_status() # raise an exception for bad status codes
         data = response.json()
         if data:
