@@ -7,5 +7,7 @@ assemblyai
 openai
 plotly-express
 altair
-groq
 yt-dlp
+groq
+playwright
+nest-asyncio
