@@ -61,13 +61,16 @@ def download_youtube_audio(youtube_url, i=0):
             
         # 3. Configuration for yt-dlp library
         ydl_opts = {
-            # FIX: Request a specific, stable audio format to bypass HTTP 403 errors
+            # ADDING VERBOSE: TRUE TO GET DETAILED DEBUG OUTPUT
+            'verbose': True, 
+            
+            # Request a specific, stable audio format to bypass HTTP 403 errors
             'format': 'bestaudio[ext=m4a]/bestaudio', 
             'extract_audio': True, 
             'audioformat': "mp3", 
             'outtmpl': final_output_path, 
             'noplaylist': True,
-            'quiet': True,
+            'quiet': False, # Setting quiet to False is REQUIRED for verbose output
             'cookiefile': cookies_path, 
             'writethumbnail': False,
             'postprocessors': [{
