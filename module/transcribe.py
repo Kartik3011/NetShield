@@ -62,9 +62,7 @@ def download_youtube_audio(youtube_url, i=0):
         # 3. Configuration for yt-dlp library
         ydl_opts = {
             # --- START CRITICAL PO TOKEN BYPASS ---
-            # Force using the web client, which is sometimes more lenient than default
             'extractor_args': ['youtube:client=web'],
-            # Skip checking for supported JS runtime (avoids the "No supported Javascript runtime" warning)
             'skip_download': False, 
             'no_check_formats': True,
             # --- END CRITICAL PO TOKEN BYPASS ---
@@ -72,8 +70,9 @@ def download_youtube_audio(youtube_url, i=0):
             # ADDING VERBOSE: TRUE TO GET DETAILED DEBUG OUTPUT
             'verbose': True, 
             
-            # Request a specific, stable audio format
-            'format': 'bestaudio[ext=m4a]/bestaudio', 
+            # FIX: Use a custom format filter to prioritize token-free streams (opus/m4a) 
+            # and explicitly ignore formats known to cause PO Token/SABR issues.
+            'format': 'bestaudio[acodec=opus]/bestaudio[ext=m4a]/bestaudio', 
             'extract_audio': True, 
             'audioformat': "mp3", 
             'outtmpl': final_output_path, 
@@ -106,7 +105,7 @@ def download_youtube_audio(youtube_url, i=0):
             try:
                 info = ydl.extract_info(youtube_url, download=False)
                 for f in info.get('formats', []):
-                    if f.get('ext') in ('m4a', 'mp3', 'webm'):
+                    if f.get('ext') in ('m4a', 'mp3', 'webm', 'opus'):
                          print(f"ID: {f.get('format_id')}, Ext: {f.get('ext')}, VCodec: {f.get('vcodec')}, ACodec: {f.get('acodec')}, Size: {f.get('filesize')}")
             except Exception as e:
                 print(f"Could not retrieve format info for final check: {e}")
