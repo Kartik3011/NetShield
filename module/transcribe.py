@@ -61,10 +61,18 @@ def download_youtube_audio(youtube_url, i=0):
             
         # 3. Configuration for yt-dlp library
         ydl_opts = {
+            # --- START CRITICAL PO TOKEN BYPASS ---
+            # Force using the web client, which is sometimes more lenient than default
+            'extractor_args': ['youtube:client=web'],
+            # Skip checking for supported JS runtime (avoids the "No supported Javascript runtime" warning)
+            'skip_download': False, 
+            'no_check_formats': True,
+            # --- END CRITICAL PO TOKEN BYPASS ---
+            
             # ADDING VERBOSE: TRUE TO GET DETAILED DEBUG OUTPUT
             'verbose': True, 
             
-            # Request a specific, stable audio format to bypass HTTP 403 errors
+            # Request a specific, stable audio format
             'format': 'bestaudio[ext=m4a]/bestaudio', 
             'extract_audio': True, 
             'audioformat': "mp3", 
@@ -93,6 +101,16 @@ def download_youtube_audio(youtube_url, i=0):
             return final_output_path
         else:
             print(f"Download completed, but final file not found at {final_output_path}.")
+            # Log the formats yt-dlp found for debugging
+            print("--- FORMATS FOUND (Final Check) ---")
+            try:
+                info = ydl.extract_info(youtube_url, download=False)
+                for f in info.get('formats', []):
+                    if f.get('ext') in ('m4a', 'mp3', 'webm'):
+                         print(f"ID: {f.get('format_id')}, Ext: {f.get('ext')}, VCodec: {f.get('vcodec')}, ACodec: {f.get('acodec')}, Size: {f.get('filesize')}")
+            except Exception as e:
+                print(f"Could not retrieve format info for final check: {e}")
+
             return None
 
     except yt_dlp.utils.DownloadError as e:
