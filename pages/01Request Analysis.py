@@ -6,12 +6,7 @@ from module import yextractor as youtube
 import requests
 import os
 
-# function to get lat/lon from city name
 
-# Old code (kartik3011/netshield/NetShield-10c13928453d92cc296ea379993aac57164a3191/pages/01Request Analysis.py):
-# response = requests.get(url, headers=headers, timeout=5)
-
-# New code:
 
 def get_coordinates(city_name):
     """Fetch latitude and longitude for a given city name."""
@@ -131,12 +126,12 @@ with st.form("video_fetch_form"):
     # Buttons
     col_b1, col_b2 = st.columns(2)
     with col_b1:
-        # Changed the button label to be clearer about the action
+        # button label to be clearer about the action
         submitted = st.form_submit_button("Fetch Data & Go to Content Report Page")
     with col_b2:
         autox = st.form_submit_button("Complete Analysis & Switch to Automate Page")
 
-# -DATA PROCESSING LOGI-
+# -DATA PROCESSING logicc
 if submitted or autox:
     st.session_state.csv_filename = csv_filename # Store the filename
     try:
@@ -168,7 +163,7 @@ if submitted or autox:
 
         st.success(f"✅ Data fetched and saved to **{csv_filename}**.")
         
-        # ORIGINAL PAGE SWITCHING LOGIC
+        # PAGE SWITCHING 
         if autox:
             st.switch_page("pages/06Automate.py") # GO TO AUTOMATE
         elif submitted:
@@ -187,7 +182,7 @@ st.markdown(
       <ul style="font-size: 16px; margin: 0; color: #fff; padding-left: 20px; list-style-type: disc;">
        <strong>Note on Re-Searching:</strong> 
         <li>
-            If you are searching for a new tag or video for a second time, please <strong>refresh your browser page (press F5 or Cmd+R) or clear the cache of the wesbite.</strong>
+            If you are searching for a new tag or video for a second time, please <strong>refresh your browser page and clear the cache of the wesbite(Top right 3 dots).</strong>
         </li>
         <li>
              This clears the application's cache and ensures the dashboard loads the new data you just fetched to avoid conflict with previous data.
