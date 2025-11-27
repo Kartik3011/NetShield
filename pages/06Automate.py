@@ -16,7 +16,7 @@ import time
 
 st.set_page_config(page_title="NetShield Automation", layout="wide", initial_sidebar_state="expanded")
 
-
+st.cache_data.clear()
 
 st.markdown("""
     <style>
