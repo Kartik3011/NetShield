@@ -1,18 +1,18 @@
 import streamlit as st
 import re
-from youtube_transcript_api import YouTubeTranscriptApi
+# Corrected Import: Import the module directly
+import youtube_transcript_api 
 from youtube_transcript_api._errors import NoTranscriptFound
-
-# You should have already installed 'youtube-transcript-api' in requirements.txt
 
 # --- Utility to safely extract Video ID from URL ---
 def get_video_id(url):
     """Extracts the 11-character YouTube video ID from a URL."""
+    # Regex that captures the video ID from standard watch and short youtu.be URLs
     regex = r"(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^\"&?\/\s]{11})"
     match = re.search(regex, url)
     return match.group(1) if match else None
 
-# --- New Transcription Function using Subtitles ---
+# --- Transcription Function using Subtitles ---
 @st.cache_data(show_spinner=False, ttl=3600) 
 def transcript(url, video_index): 
     """
@@ -25,8 +25,8 @@ def transcript(url, video_index):
         return f"Error: Invalid YouTube URL format detected for index {video_index}."
 
     try:
-        # Fetch the transcript list for the video ID
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi', 'ur'])
+        # CORRECTED CALL: Use the full path to the class to resolve the error
+        transcript_list = youtube_transcript_api.YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi', 'ur'])
         
         # Combine the list of dictionaries into a single text string
         full_transcript = ' '.join([item['text'] for item in transcript_list])
