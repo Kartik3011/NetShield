@@ -16,6 +16,7 @@ import time
 
 st.set_page_config(page_title="NetShield Automation", layout="wide", initial_sidebar_state="expanded")
 
+# CRITICAL FIX: Programmatic cache clear (retained per user request)
 st.cache_data.clear()
 
 st.markdown("""
@@ -176,9 +177,10 @@ for i, j in zip(video_Link, video_titles):
             # Ensure the module function exists and works
 
             try:
-                content = ts.transcript(i,k)
+                # UPDATED CALL: Use the renamed function
+                content = ts.get_subtitles(i,k)
             except NameError:
-                st.error("Error: `ts.transcript` module not found or failed to load.")
+                st.error("Error: `ts.get_subtitles` module not found or failed to load.")
                 content = None
         
         if content is None:
