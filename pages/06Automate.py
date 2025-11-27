@@ -176,7 +176,7 @@ for i, j in zip(video_Link, video_titles):
             # Ensure the module function exists and works
 
             try:
-                content=ts.transcript(i,k)
+                content = ts.transcript(i, k, cache_version=1)
             except NameError:
                 st.error("Error: `ts.transcript` module not found or failed to load.")
                 content = None
