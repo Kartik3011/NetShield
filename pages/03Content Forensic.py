@@ -7,6 +7,8 @@ import os
 import time
 
 st.set_page_config(page_title="Content Forensic", layout="wide", initial_sidebar_state="expanded")
+
+# CRITICAL FIX: Programmatic cache clear (retained per user request)
 st.cache_data.clear()
 
 st.markdown("""
@@ -138,7 +140,8 @@ try:
         try:
             #loading incdicator
             with st.spinner(f"Downloading and transcribing video {k+1}...") :
-                content = ts.transcript(i,k) 
+                # UPDATED CALL: Use the renamed function
+                content = ts.get_subtitles(i,k) 
             # --- END 
         except Exception as e:
             content = None
