@@ -1,49 +1,92 @@
-import assemblyai as aai
 import streamlit as st
-import time # Needed for polling logic
+import os
+import tempfile
+from openai import OpenAI # New dependency for Whisper
+import yt_dlp # Re-introducing for local download
 
-# Set the AssemblyAI API key from Streamlit secrets
+# Ensure your OPENAI_API_KEY is available in Streamlit secrets
 try:
-    aai.settings.api_key = st.secrets["ASSEMBLYAI_API_KEY"]
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 except KeyError:
-    st.error("ASSEMBLYAI_API_KEY not found in st.secrets.")
-    aai.settings.api_key = "DUMMY_KEY" 
+    st.error("OPENAI_API_KEY not found in st.secrets.")
+    client = None
+
+# --- NEW FUNCTION: Simplified Audio Download ---
+def download_youtube_audio_local(youtube_url, i=0):
+    """
+    Downloads audio from a YouTube URL to a local temporary file using yt-dlp.
+    Bypasses cookie logic to test a clean local download path.
+    """
+    if not client: return None
+    
+    temp_dir = tempfile.gettempdir()
+    final_output_path = os.path.join(temp_dir, f"video_{i}_audio.mp3")
+
+    try:
+        ydl_opts = {
+            'format': 'bestaudio[ext=m4a]/bestaudio', 
+            'extract_audio': True, 
+            'audioformat': "mp3", 
+            'outtmpl': final_output_path, 
+            'noplaylist': True,
+            'quiet': True,
+            # CRITICAL: Removing 'cookiefile' option from the old code
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([youtube_url])
+        
+        if os.path.exists(final_output_path):
+            print(f"Audio downloaded locally to {final_output_path}")
+            return final_output_path
+        else:
+            return None
+
+    except Exception as e:
+        print(f"yt-dlp Local Download Error: {e}")
+        return None
+# -----------------------------------------------
+
 
 @st.cache_data(show_spinner=False, ttl=3600)
-# CRITICAL: Added cache_version=2 to force a NEW cache reset
-def transcript(url, video_index, cache_version=2): 
+# CRITICAL: Use cache_version=3 to definitively bust the old cache
+def transcript(url, video_index, cache_version=3): 
     """
-    Transcribes audio directly from a YouTube URL using AssemblyAI's remote fetching feature.
+    Downloads audio locally and transcribes it using OpenAI Whisper API.
     """
-    print(f"Starting remote transcription for URL: {url} (v{cache_version})")
+    if not client: return "OpenAI client not initialized (API key missing)."
+    
+    print(f"Starting local download & Whisper transcription for URL: {url} (v{cache_version})")
+    audio_path = None
     
     try:
-        transcriber = aai.Transcriber()
-        config = aai.TranscriptionConfig(language_code="en")
+        # 1. Local Download Attempt
+        audio_path = download_youtube_audio_local(url, i=video_index)
         
-        # 1. Submit the URL for transcription
-        transcript_obj = transcriber.submit(url, config=config)
-        
-        # 2. Poll the status for the result
-        status = transcript_obj.status
-        while status not in ('completed', 'error'):
-            time.sleep(5)
-            transcript_obj = transcriber.get_transcript(transcript_obj.id)
-            status = transcript_obj.status
-            print(f"Transcript ID {transcript_obj.id} status: {status}")
+        if not audio_path or not os.path.exists(audio_path):
+            return "Local audio download failed (yt-dlp or FFmpeg failure)."
             
-        # 3. Handle Error Status specifically
-        if status == aai.TranscriptStatus.error:
-             # This is the crucial debugging step: printing the specific error message
-             error_details = transcript_obj.error if hasattr(transcript_obj, 'error') else "Unknown AssemblyAI Error."
-             print(f"AssemblyAI FAILED with details: {error_details}")
-             return f"Transcription failed with error: {error_details}"
+        # 2. Whisper API Transcription (requires file object)
+        with open(audio_path, "rb") as audio_file:
+            transcript_obj = client.audio.transcriptions.create(
+                model="whisper-1", 
+                file=audio_file,
+                response_format="text"
+            )
         
-        # 4. Handle Completed Status
-        return transcript_obj.text if transcript_obj.text else "Transcription returned empty text."
+        return transcript_obj
         
     except Exception as e:
-        print(f"AssemblyAI API request failed: {e}")
-        return f"Transcription service error: {e}"
-
-# No local file cleanup is needed.
+        print(f"Whisper API transcription failed: {e}")
+        return f"Whisper API service error: {e}"
+        
+    finally:
+        # 3. Clean up the local file
+        if audio_path and os.path.exists(audio_path):
+            os.remove(audio_path)
+            print(f"Cleaned up local file: {audio_path}")
