@@ -12,9 +12,9 @@ def get_video_id(url):
     match = re.search(regex, url)
     return match.group(1) if match else None
 
-# --- Transcription Function using Subtitles ---
+# --- NEW FUNCTION NAME: get_subtitles ---
 @st.cache_data(show_spinner=False, ttl=3600) 
-def transcript(url, video_index): 
+def get_subtitles(url, video_index): 
     """
     Fetches the video's transcript/captions directly from YouTube's API.
     """
@@ -25,7 +25,7 @@ def transcript(url, video_index):
         return f"Error: Invalid YouTube URL format detected for index {video_index}."
 
     try:
-        # CORRECTED CALL: Use the full path to the class to resolve the error
+        # CORRECTED CALL: Use the full path (module.class.method) to resolve the error
         transcript_list = youtube_transcript_api.YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi', 'ur'])
         
         # Combine the list of dictionaries into a single text string
