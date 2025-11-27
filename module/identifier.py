@@ -4,7 +4,7 @@ import streamlit as st
 client = OpenAI(
   base_url = "https://integrate.api.nvidia.com/v1",
   api_key = st.secrets["NVIDIA_API_KEY"],
-  timeout=60.0
+  timeout=100.0
 )
 
 def validator(transcribed_text,user_content):
@@ -16,7 +16,7 @@ def validator(transcribed_text,user_content):
         "2. Assess the overall accuracy of the YouTube video summary based on the news article summary.\n"
         "3. **CRITICAL: Evaluate if the topic of the content is highly factual or technical** (e.g., 'Air Quality Index', 'Legal Proceedings', 'Financial News') **and contains significant religious or devotional content**. If such a mismatch exists, it indicates **content abuse or misleading tagging**, and the status should be **RED** regardless of factual accuracy.\n"
         "4. Provide your evaluation as one of the following:\n"
-        "   - **Green**: The video content is highly accurate and aligns well with the news context.\n"
+        "   - **Green**: The video content is **factually consistent** and aligns well with the news context. Minor omissions or small differences in secondary details (e.g., a specific number or date) are acceptable, provided the core conclusion or event remains accurate.\n" 
         "   - **Yellow**: The video is partially accurate, misses key points, or lacks sufficient news context for verification.\n"
         "   - **Red**: The video contains major inaccuracies, contradictions, **OR exhibits content abuse/misleading tags** (e.g., devotional content in a factual report).\n"
         "Only respond with Green, Yellow, or Red, without any explanation..\n\n"
@@ -25,7 +25,10 @@ def validator(transcribed_text,user_content):
         f"News Article Summary:\n\"{user_content}\""
     )
     completion = client.chat.completions.create(
-        model="meta/llama3-70b-instruct",
+        model="meta/llama3-8b-instruct",
+      #meta/llama3-8b-instruct
+      #meta/llama3-70b-instruct  very slow
+      #mistralai/mistral-7b-instruct-v0.3
         messages=[{"role":"user","content":a}],
         temperature=0.5,
         top_p=1,
