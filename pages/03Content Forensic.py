@@ -137,7 +137,7 @@ try:
         try:
             #loading incdicator
             with st.spinner(f"Downloading and transcribing video {k+1}...") :
-                content = ts.transcript(i, k, cache_version=1) 
+                content = ts.transcript(i, k, cache_version=3) 
             # --- END 
         except Exception as e:
             content = None
