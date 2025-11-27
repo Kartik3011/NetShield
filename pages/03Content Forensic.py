@@ -7,6 +7,7 @@ import os
 import time
 
 st.set_page_config(page_title="Content Forensic", layout="wide", initial_sidebar_state="expanded")
+st.cache_data.clear()
 
 st.markdown("""
     <style>
