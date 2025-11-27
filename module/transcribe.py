@@ -1,5 +1,10 @@
 import assemblyai as aai
 import streamlit as st
+# The following modules are no longer required for cloud deployment
+# import yt_dlp 
+# import os 
+# import tempfile 
+# import time 
 
 # Set the AssemblyAI API key from Streamlit secrets
 try:
@@ -8,20 +13,22 @@ except KeyError:
     st.error("ASSEMBLYAI_API_KEY not found in st.secrets.")
     aai.settings.api_key = "DUMMY_KEY" 
 
-# Note: The download_youtube_audio function is now completely removed.
+# The local file download function has been removed.
 
-@st.cache_data(show_spinner=False)
-def transcript(url, video_index): 
+
+@st.cache_data(show_spinner=False, ttl=3600)
+# CRITICAL: Added cache_version=1 to force a cache reset when the code changes
+def transcript(url, video_index, cache_version=1): 
     """
     Transcribes audio directly from a YouTube URL using AssemblyAI's remote fetching feature.
     """
-    print(f"Starting remote transcription for URL: {url}")
+    print(f"Starting remote transcription for URL: {url} (v{cache_version})")
     
     try:
         transcriber = aai.Transcriber()
         
-        # AssemblyAI handles the media download from the URL itself.
-        # This is the fix for the yt-dlp/cookie/transcoding errors.
+        # AssemblyAI handles the media download from the URL itself, 
+        # bypassing local issues like yt-dlp, cookies, and FFmpeg transcoding.
         config = aai.TranscriptionConfig(language_code="en")
         
         # Pass the URL directly to the transcribe method
@@ -36,4 +43,4 @@ def transcript(url, video_index):
         print(f"AssemblyAI transcription failed: {e}")
         return f"Transcription service error: {e}"
         
-# No file cleanup or local resource management is required.
+# No local file cleanup is needed.
