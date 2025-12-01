@@ -7,10 +7,5 @@ assemblyai
 openai
 plotly-express
 altair
-youtube-transcript-api
+yt-dlp
 groq
-
-
-
-
-
