@@ -27,6 +27,7 @@ It uses a strong AI pipeline in order to automatically extract different content
 | **Transcription** | **AssemblyAI** | Converts video audio streams into text. |
 | **External Dependencies** | **`yt-dlp` and `FFmpeg`** | Downloads and converts YouTube audio streams to MP3. |
 | **Data Scraping** | **`requests` and `BeautifulSoup`** | Fetches news articles from Google News. |
+| **Data Scraping** | **`NewsAPI`** | Fallback method for fetching news articles. |
 
 ## Usage
 
