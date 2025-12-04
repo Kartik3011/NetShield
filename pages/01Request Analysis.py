@@ -116,7 +116,7 @@ with st.form("video_fetch_form"):
 
     # I 3
     with col3:
-        max_results = st.number_input("Maximum results to fetch:", min_value=1, max_value=20, value=5)
+        max_results = st.number_input("Maximum results to fetch:", min_value=1, max_value=50, value=5)
         end_date = st.date_input("End date", value=datetime(2025, 11, 30))
 
  
@@ -157,6 +157,15 @@ if submitted or autox:
         progress_bar.progress(50, text="Fetching video data from YouTube...")
 
         youtube.video_info(hashtag, lat, lon, radius, max_results, start_date_dt, end_date_dt, csv_filename)
+
+        try:
+            # Load the file just created 
+            df = pd.read_csv(csv_filename)
+            st.session_state['video_data_df'] = df 
+            st.info("Data successfully loaded into application memory.")
+        except Exception as read_e:
+            st.error(f"Error reading data back from disk: {read_e}. Content Report might fail.")
+        
 
         progress_bar.progress(100, text="Data fetching complete.")
 
