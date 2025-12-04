@@ -105,6 +105,10 @@ st.markdown("""
 @st.cache_data
 def load_data():
     """Loads the video data CSV, handling file not found errors."""
+    if 'video_data_df' in st.session_state and not st.session_state['video_data_df'].empty:
+        # Load from memory, bypassing the need for immediate disk access
+        return st.session_state['video_data_df']
+        
     file_path = os.path.join(os.getcwd(), "video_data.csv") 
     
     # Check if the file exists before attempting to read
