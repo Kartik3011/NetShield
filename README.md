@@ -4,6 +4,10 @@
 
 It uses a strong AI pipeline in order to automatically extract different content, translate non-English audio, fetch contextual news, and apply advanced Large Language Models (LLMs) to determine a clear authenticity status (Green, Yellow, or Red).
 
+Leveraged RESTful principles to architect seamless data exchange between the application and external high-compute services, including YouTube Data API, NewsAPI, and NVIDIA NIM LLM endpoints.
+
+**Microservices Architecture**: Decoupled application components into isolated Docker containers, utilizing RESTful APIs for standardized, stateless communication between the Streamlit frontend and specialized AI workers.
+
 ##  Core Features
 
 * **AI-Powered Content Detection:** Uses advanced Natural Language Processing (NLP) and machine learning models to detect harmful content and fake news in real-time.
