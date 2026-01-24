@@ -2,33 +2,26 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
-
 import requests
 import altair as alt
 import os
 
-
+# STREAMLIT PAGE CONFIG
 st.set_page_config(page_title="Social Content Report", layout="wide", initial_sidebar_state="expanded")
 
-
-
+# CSS FOR NETSHIELD LOGO AND UI STYLING
 st.markdown("""
     <style>
-        /* 1. GAP REDUCTION: Main content block padding */
         .block-container {
-            padding-top: 0rem !important; /* REDUCES GAP ABOVE TITLE */
+            padding-top: 0rem !important; 
             padding-bottom: 0rem !important;
             padding-left: 2rem !important;
             padding-right: 2rem !important;
         }
-
-        /* 2. SIDEBAR BACKGROUND */
         [data-testid="stSidebar"] {
-            background-color: #1f2937; /* Dark background */
+            background-color: #1f2937;
             color: white;
         }
-
-        /* 3. FIXED LOGO INJECTION (Top Left Sidebar) */
         [data-testid="stSidebar"]::before {
             content: "NetShield 🛡️";
             display: block;
@@ -40,8 +33,6 @@ st.markdown("""
             border-bottom: 1px solid rgba(255,255,255,0.2);
             margin-bottom: 10px;
         }
-        
-        /* 4. SIDEBAR FOOTER (Navigation Text at Bottom) */
         [data-testid="stSidebar"]::after {
             content: "Use the sidebar to navigate through NetShield features.";
             position: absolute;
@@ -54,96 +45,81 @@ st.markdown("""
             color: rgba(255, 255, 255, 0.5); 
             z-index: 10000;
         }
-        
-        /* Custom style for the description box */
         .description-box {
-            background-color: #262626; /* Very light blue background */
+            background-color: #262626;
             padding: 15px;
             border-radius: 5px;
-            border-left: 5px solid #3498db; /* Blue accent color */
-            margin-bottom: 30px; /* Space after the description box */
+            border-left: 5px solid #3498db;
+            margin-bottom: 30px;
         }
-        
-        /* Custom style for the note box at the bottom */
         .bottom-note-box {
-            /* Reduced margin-top for less space between graph and note */
             margin-top: 20px; 
-            margin-bottom: 40px; /* Increased space after the note box */
+            margin-bottom: 40px;
         }
     </style>
 """, unsafe_allow_html=True)
 
-
-st.markdown("""
-    <div style="display: none;">
-        NetShield🛡️
-    </div>
-""", unsafe_allow_html=True)
-
-
-
 st.title("Social Content Report")
 
-# -  BOXED DESCRIPTION AT THE TOp OF THE PAGE -
 st.markdown("""
     <div class="description-box">
               <strong style="font-size: 16px; margin-left: 10px; display: block;">Report Overview:</strong> 
        <ul style="font-size: 16px; margin: 0; color: #fff; padding-left: 20px;">
-    <li>
-        This page provides a comprehensive report based on the data fetched from YouTube. The raw dataset is displayed below for initial inspection.
-    </li>
-    <li>
-        Please see the filters to analyze video view trends across selected channels. 
-    </li>
-    
+    <li>This page provides a comprehensive report based on the data fetched from YouTube.</li>
+    <li>Please see the filters to analyze video view trends across selected channels.</li>
 </ul>
     </div>
 """, unsafe_allow_html=True)
-# --------
 
-
-@st.cache_data
+# ROBUST DATA LOADING LOGIC
 def load_data():
-    """Loads the video data CSV, handling file not found errors."""
-    if 'video_data_df' in st.session_state and not st.session_state['video_data_df'].empty:
-        # Load from memory, bypassing the need for immediate disk access
-        return st.session_state['video_data_df']
+    """Loads the video data CSV, checking both session memory and physical disk."""
+    # 1. Check session state memory first
+    if 'video_data_df' in st.session_state and st.session_state['video_data_df'] is not None:
+        if not st.session_state['video_data_df'].empty:
+            return st.session_state['video_data_df']
         
-    file_path = os.path.join(os.getcwd(), "video_data.csv") 
+    # 2. Check physical disk with direct pathing
+    # We use a simple filename first as it's most reliable in Streamlit Cloud root dirs
+    file_name = "video_data.csv"
     
-    # Check if the file exists before attempting to read
-    if not os.path.exists(file_path):
-        st.error(f"Error: Data file not found at {file_path}. Please go back and run the data fetching step.")
-        return pd.DataFrame() # Return empty DataFrame on error
-        
-    return pd.read_csv(file_path)
+    if os.path.exists(file_name):
+        try:
+            df = pd.read_csv(file_name)
+            # Cache it back to session state for the current session
+            st.session_state['video_data_df'] = df
+            return df
+        except Exception as e:
+            st.error(f"Error reading {file_name}: {e}")
+            return pd.DataFrame()
+    
+    # 3. Fallback to full path check if simple name fails
+    full_path = os.path.join(os.getcwd(), file_name)
+    if os.path.exists(full_path):
+        return pd.read_csv(full_path)
 
+    return pd.DataFrame()
 
+# LOAD DATA
 df = load_data()
 
+if df.empty:
+    st.error("⚠️ Error: 'video_data.csv' not found. Please go back to the 'Request Analysis' page and click 'Fetch Data'.")
+    st.info("If you just fetched data, try refreshing the page (F5) to clear the browser cache.")
+    st.stop()
+
+# RAW DATA DISPLAY
 st.subheader("Raw Data Table")
-
-# Use the highly readable st.dataframe for the table
-
 st.dataframe(df, use_container_width=True, hide_index=True)
 
 st.markdown("---")
 
-
+# VIEW TREND ANALYSIS
 try:
-    if df.empty:
-         
-         # Skip the rest of the chart logic if the DataFrame is empty
-
-         pass 
-    elif "Published At" not in df.columns or "Views" not in df.columns:
-        st.error("The dataset must contain 'Published At' and 'Views' columns.")
+    if "Published At" not in df.columns or "Views" not in df.columns:
+        st.error("The dataset is missing required columns: 'Published At' or 'Views'.")
     else:
-
-        # Data processing and selection
-
         df["Published At"] = pd.to_datetime(df["Published At"])
-        
         st.subheader("Video View Trend Analysis")
         
         channels = st.multiselect("Select Channels to filter the chart:", df["Channel Title"].unique(), [])
@@ -155,9 +131,6 @@ try:
         if df_filtered.empty:
             st.warning("No data available for the selected channels.")
         else:
-
-            # Chart generation
-
             plot_data = df_filtered.groupby(df_filtered["Published At"].dt.date)["Views"].sum().reset_index()
             plot_data["Published At"] = pd.to_datetime(plot_data["Published At"])
 
@@ -169,37 +142,28 @@ try:
                     y=alt.Y("Views:Q", title="Total Views"),
                     tooltip=["Published At:T", "Views:Q"]
                 )
-                .properties(
-                    title="Views Over Time for Published Videos"
-                )
+                .properties(title="Views Over Time for Published Videos")
                 .interactive()
             )
             st.altair_chart(chart, use_container_width=True)
 
             st.markdown(
-                "<p style='font-size: 14px; color: #888888; text-align: center;'>⚠️ The chart may not display trends if the data set of selected videos is very small or if they were published on the same day/recently.</p>", 
+                "<p style='font-size: 14px; color: #888888; text-align: center;'>⚠️ Trends may not appear if the data set is very small or videos share the same date.</p>", 
                 unsafe_allow_html=True
             )
 
 except Exception as e:
-    st.error(f"An error occurred: {e}")
-
-
+    st.error(f"An error occurred while generating trends: {e}")
 
 st.markdown(
     """
     <div class="bottom-note-box" style="background-color: #262626; padding: 15px; border-radius: 5px; border-left: 5px solid #28a745;">
       <ul style="font-size: 16px; margin: 0; color: #fff; padding-left: 20px; list-style-type: disc;">
        <strong>NOTE:</strong> 
-        <li>
-            This report displays all videos returned by the YouTube API for the broad search query.  It often includes videos with misleading tags (junk content).
-        </li>
-        <li>
-            The process of <strong>AI-powered filtering and misinformation detection (Green/Yellow/Red status)</strong> is performed in the <strong>AUTOMATE</strong> section.
-        </li>
+        <li>This report displays raw data returned by the YouTube API.</li>
+        <li>AI-powered filtering and misinformation detection (Green/Yellow/Red status) is performed in the <strong>AUTOMATE</strong> section.</li>
     </ul>
     </div>
     """, 
     unsafe_allow_html=True
 )
-
