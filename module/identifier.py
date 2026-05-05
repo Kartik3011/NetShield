@@ -36,7 +36,7 @@ def validator(transcribed_text,user_content):
         f"News Article Summary:\n\"{user_content}\""
     )
     completion = client.chat.completions.create(
-        model="mistralai/mistral-7b-instruct-v0.3", 
+        model="meta/llama-3.1-8b-instruct", 
          # meta/llama3-70b-instruct   very slow
         # mistralai/mistral-7b-instruct-v0.3
         # meta/llama3-8b-instruct
