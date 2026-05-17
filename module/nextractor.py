@@ -4,10 +4,12 @@ import json
 from typing import List
 import streamlit as st
 
-
+# =========================================================================
+# NEWSAPI CONFIGURATION
+# NOTE: You MUST replace this key with your actual NewsAPI key in st.secrets.
 NEWS_API_KEY = st.secrets["NEWS_API_KEY"]  
 NEWS_API_ENDPOINT = "https://newsapi.org/v2/everything"
-
+# =========================================================================
 
 class News:
     """Class to hold structured news article data."""
@@ -24,7 +26,7 @@ class News:
                 f"publisher={self.publisher},\n description={self.description},\n "
                 f"content={self.content},\n pubDate={self.pubDate}\n")
 
-# GOOGLE NEWS SCRAPING 
+# --- GOOGLE NEWS SCRAPING HELPER (High Accuracy) ---
 
 def _extract_google_content(url):
     """Scrapes content from a single article link found by Google News scraper."""
@@ -34,7 +36,7 @@ def _extract_google_content(url):
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')           
             
-            # Find JSON ld metadata which contains clean article content
+            # Find JSON-LD metadata, which often contains clean article content
             for script in soup.find_all('script', {"type": "application/ld+json"}):                
                 masterjson.update(json.loads(script.string))
 
@@ -101,7 +103,7 @@ def _scrape_google_news(query: str, limit: int = 5) -> List[News]:
         print(f"Google News Scraper Error: {e}")
         return []
 
-# NEWSaPI HELPER FUNCTIONS High Coverage
+# --- NEWSAPI HELPER FUNCTIONS (High Coverage) ---
 
 def _scrape_full_article_body(url: str) -> str:
     """Fetches the URL and attempts to scrape the main article text."""
@@ -113,7 +115,7 @@ def _scrape_full_article_body(url: str) -> str:
         response.raise_for_status() 
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        # look for common article containers and then paragraphs
+        # Heuristic: look for common article containers and then paragraphs
         article_block = soup.find('article') or soup.find('main') or soup.find('div', class_='content')
         
         paragraphs = []
@@ -123,7 +125,7 @@ def _scrape_full_article_body(url: str) -> str:
              # Fallback to all paragraphs if no specific block is found
              paragraphs = soup.find_all('p')
 
-        # Filter shortjunk paragraphs and combine text
+        # Filter short/junk paragraphs and combine text
         full_text = ' '.join([p.text for p in paragraphs if len(p.text.split()) > 10]) 
              
         return full_text.strip()
@@ -138,8 +140,9 @@ def _scrape_full_article_body(url: str) -> str:
 
 def _api_fetch_articles(query: str, limit: int = 5) -> List[News]:
     """Fetches articles using NewsAPI as a fallback."""
-    if NEWS_API_KEY == st.secrets["NEWS_API_KEY"]:
-        print("NewsAPI key is not configured. Skipping fallback.")
+    # FIX: Ensure NewsAPI fallback is not disabled by faulty logic
+    if not NEWS_API_KEY:
+        print("NewsAPI key is not configured or is empty. Skipping fallback.")
         return []
         
     params = {
@@ -183,7 +186,7 @@ def _api_fetch_articles(query: str, limit: int = 5) -> List[News]:
         print(f"General error processing API response: {e}")
         return []
 
-# MASTER FUNCTION WITH FALLBACK LOGI
+# --- MASTER FUNCTION WITH FALLBACK LOGIC ---
 
 def get_news_list(query: str, limit: int = 5) -> List[News]:
     """
@@ -191,12 +194,12 @@ def get_news_list(query: str, limit: int = 5) -> List[News]:
     If that fails or returns zero results, it falls back to NewsAPI for better coverage.
     """
     
-    # 1 Try Google News Scraping ( Accuracy
+    # 1. Try Google News Scraping (Highest Accuracy)
     print(f"Attempting Google News scrape for query: '{query}'")
     results = _scrape_google_news(query, limit)
     
     if len(results) < limit and len(results) == 0:
-        # 2 Fallback to NewsAPI (Highest Coverage)
+        # 2. Fallback to NewsAPI (Highest Coverage)
         print("Google News scraping failed or returned insufficient results. Falling back to NewsAPI.")
         fallback_results = _api_fetch_articles(query, limit)
         
