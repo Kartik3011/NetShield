@@ -139,7 +139,7 @@ try:
         st.error("Data file (video_data.csv) not found. Please ensure data has been fetched on the previous analysis page.")
         st.stop()
         
-    df = pd.read_csv(file_path) 
+    df = pd.read_csv(file_path).fillna("") 
     
     # Standardize column name extraction
     video_titles = df.iloc[:, df.columns.get_loc('Video Title')] if 'Video Title' in df.columns else df.iloc[:, 1]
