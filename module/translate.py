@@ -1,9 +1,10 @@
 from openai import OpenAI
 import streamlit as st
 
+# Switch to Groq's OpenAI-compatible endpoint
 client = OpenAI(
-    base_url="https://integrate.api.nvidia.com/v1",
-    api_key=st.secrets["NVIDIA_API_KEY"]
+    base_url="https://api.groq.com/openai/v1",
+    api_key=st.secrets["GROQ_API_KEY"]
 )
 
 def trans(a):
@@ -13,14 +14,14 @@ def trans(a):
     CRITICAL RULE: The translated text must be a minimal, high-relevance search query. You must:
     1. Translate the core topic.
     2. Remove all hashtags, channel names, irrelevant filler words (like 'Vlog', 'Shorts', 'Unboxing').
-    3. The final output must be a single phrase containing a MAXIMUM of 8 words. <--- MODIFIED FROM 4 WORDS
+    3. The final output must be a single phrase containing a MAXIMUM of 8 words.
 
     just only translated text
     The text to translate is as follows:
     """ + str(a)
   
     completion = client.chat.completions.create(
-        model="meta/llama3-8b-instruct",
+        model="openai/gpt-oss-20b",
         messages=[{"role":"user","content":con}],
         temperature=0.2,
         top_p=0.7,
