@@ -73,17 +73,24 @@ def video_info(hashtag, latitude, longitude, radius='50km', max_results=10, star
             writer.writeheader()
 
             while video_count < max_results:
-                request = youtube.search().list(
-                    part="snippet",
-                    q=hashtag,
-                    type="video",
-                    location=f"{latitude},{longitude}",
-                    locationRadius=radius,
-                    maxResults=min(50, max_results - video_count),  # Request only remaining videos
-                    pageToken=next_page_token,
-                    publishedAfter=start_date.strftime('%Y-%m-%dT%H:%M:%SZ') if start_date else None,
-                    publishedBefore=end_date.strftime('%Y-%m-%dT%H:%M:%SZ') if end_date else None,
-                )
+                # 1. Set up the basic search parameters
+                search_params = {
+                    "part": "snippet",
+                    "q": hashtag,
+                    "type": "video",
+                    "maxResults": min(50, max_results - video_count),
+                    "pageToken": next_page_token,
+                    "publishedAfter": start_date.strftime('%Y-%m-%dT%H:%M:%SZ') if start_date else None,
+                    "publishedBefore": end_date.strftime('%Y-%m-%dT%H:%M:%SZ') if end_date else None,
+                }
+                
+                # 2. Only add the location rules if coordinates were successfully found
+                if latitude and longitude:
+                    search_params["location"] = f"{latitude},{longitude}"
+                    search_params["locationRadius"] = radius
+
+                # 3. Send the request to YouTube
+                request = youtube.search().list(**search_params)
                 response = request.execute()
 
                 for item in response.get('items', []):
