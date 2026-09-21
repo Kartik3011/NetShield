@@ -25,11 +25,11 @@ def get_coordinates(city_name):
         else:
             st.warning(f"Could not find coordinates for {city_name}. Proceeding without location filter.")
             return None, None
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error fetching coordinates: {e}. Proceeding without location filter.")
+    except requests.exceptions.RequestException:
+        st.warning(f"⚠️ Location service is currently busy. Proceeding with a global search for '{city_name}' instead.")
         return None, None
-    except Exception as e:
-        st.error(f"An unexpected error occurred during coordinate lookup: {e}")
+    except Exception:
+        st.warning(f"⚠️ Could not fetch coordinates for '{city_name}'. Proceeding with a global search instead.")
         return None, None
 
 
