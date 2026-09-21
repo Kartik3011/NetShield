@@ -333,7 +333,7 @@ if chat_available:
                 # Call Groq API
                 chat_completion = client.chat.completions.create(
                     messages=messages_to_send,
-                    model="llama-3.1-8b-instant",
+                    model="llama3-8b-8192",
                 )
                 response = chat_completion.choices[0].message.content
                 st.session_state.messages.append({"role": "assistant", "content": response})
