@@ -27,8 +27,8 @@ def validator(transcribed_text, user_content):
 
     try:
         completion = client.chat.completions.create(
-            model="meta/llama-3.1-8b-instruct",  # ✅ FIXED MODEL
-            messages=[{"role": "user", "content": prompt}],
+            model="meta/llama3-8b-instruct",
+            messages=[{"role":"user","content":con}],
             temperature=0.5,
             top_p=1,
             max_tokens=50,   # no need 1024 for 1 word
