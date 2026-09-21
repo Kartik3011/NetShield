@@ -21,7 +21,7 @@ def trans(a):
     """ + str(a)
 
     completion = client.chat.completions.create(
-    model="meta/llama-3.1-8b-instruct",
+    model="meta/llama3-8b-instruct",
     messages=[{"role":"user","content":con}],
     temperature=0.2,
     top_p=0.7,
