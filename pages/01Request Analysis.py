@@ -12,7 +12,7 @@ def get_coordinates(city_name):
     """Fetch latitude and longitude for a given city name."""
     url = f'https://nominatim.openstreetmap.org/search?city={city_name}&format=json'
     headers = {
-        'User-Agent': 'stream/1.0'
+        'User-Agent': 'NetShield_Project_your.email@gmail.com'
     }
     try:
         response = requests.get(url, headers=headers, timeout=5)
