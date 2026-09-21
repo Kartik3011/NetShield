@@ -9,27 +9,21 @@ import os
 # function to get lat/lon from city name
 
 def get_coordinates(city_name):
-    """Fetch latitude and longitude for a given city name."""
     url = f'https://nominatim.openstreetmap.org/search?city={city_name}&format=json'
     headers = {
         'User-Agent': 'NetShield_Project_your.email@gmail.com'
     }
     try:
         response = requests.get(url, headers=headers, timeout=5)
-        response.raise_for_status() # raise an exception for bad status codes
+        response.raise_for_status() 
         data = response.json()
         if data:
             lat = data[0]['lat']
             lon = data[0]['lon']
             return float(lat), float(lon)
         else:
-            st.warning(f"Could not find coordinates for {city_name}. Proceeding without location filter.")
             return None, None
-    except requests.exceptions.RequestException:
-        st.warning(f"⚠️ Location service is currently busy. Proceeding with a global search for '{city_name}' instead.")
-        return None, None
     except Exception:
-        st.warning(f"⚠️ Could not fetch coordinates for '{city_name}'. Proceeding with a global search instead.")
         return None, None
 
 
