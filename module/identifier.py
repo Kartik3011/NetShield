@@ -1,9 +1,10 @@
 from openai import OpenAI
 import streamlit as st
 
+# Switch to Groq's OpenAI-compatible endpoint
 client = OpenAI(
-    base_url="https://integrate.api.nvidia.com/v1",
-    api_key=st.secrets["NVIDIA_API_KEY"],
+    base_url="https://api.groq.com/openai/v1",
+    api_key=st.secrets["GROQ_API_KEY"],
     timeout=1000
 )
 
@@ -27,11 +28,11 @@ def validator(transcribed_text, user_content):
 
     try:
         completion = client.chat.completions.create(
-            model="meta/llama3-8b-instruct",
+            model="openai/gpt-oss-120b",
             messages=[{"role":"user","content":prompt}],
             temperature=0.5,
             top_p=1,
-            max_tokens=50,   # no need 1024 for 1 word
+            max_tokens=50,
             stream=True
         )
 
