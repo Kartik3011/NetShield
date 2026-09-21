@@ -1,7 +1,10 @@
-import groq
+from openai import OpenAI
 import streamlit as st
 
-client = groq.Groq(api_key=st.secrets["GROQ_API_KEY"])
+client = OpenAI(
+    base_url="https://api.groq.com/openai/v1",
+    api_key=st.secrets["GROQ_API_KEY"]
+)
 
 def trans(a):
     con = """You are an advanced language model capable of understanding and translating multiple languages. 
@@ -17,7 +20,7 @@ def trans(a):
     """ + str(a)
   
     completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-20b",
         messages=[{"role":"user","content":con}],
         temperature=0.2,
         top_p=0.7,
@@ -27,6 +30,7 @@ def trans(a):
     ss = ""
     for chunk in completion:
         if chunk.choices[0].delta.content is not None:
+            print(chunk.choices[0].delta.content, end="")
             ss += chunk.choices[0].delta.content
             
     return ss
