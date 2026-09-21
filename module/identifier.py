@@ -1,7 +1,8 @@
-import groq
+from openai import OpenAI
 import streamlit as st
 
-client = groq.Groq(
+client = OpenAI(
+    base_url="https://api.groq.com/openai/v1",
     api_key=st.secrets["GROQ_API_KEY"],
     timeout=1000
 )
@@ -25,7 +26,7 @@ def validator(transcribed_text, user_content):
 
     try:
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",
             messages=[{"role":"user","content":prompt}],
             temperature=0.5,
             top_p=1,
