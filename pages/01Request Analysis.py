@@ -142,9 +142,9 @@ if submitted or autox:
             lat, lon = get_coordinates(city)
 
         if lat and lon:
-             st.info(f"📍 Location set: **{city}** (Lat: {lat:.2f}, Lon: {lon:.2f}) with radius **{radius}**.")
+            st.success(f"📍 Location set: **{city}** (Lat: {lat:.2f}, Lon: {lon:.2f}) with radius **{radius}**.")
         elif city:
-            st.warning(f"Could not use location data for '{city}'. Searching globally by hashtag.")
+            st.success(f"🌐 Location map bypassed. Searching globally by hashtag for '{city}'.")
 
 
         # Fetch video data
