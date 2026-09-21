@@ -1,15 +1,12 @@
-from openai import OpenAI
+import groq
 import streamlit as st
 
-# Switch to Groq's OpenAI-compatible endpoint
-client = OpenAI(
-    base_url="https://api.groq.com/openai/v1",
+client = groq.Groq(
     api_key=st.secrets["GROQ_API_KEY"],
     timeout=1000
 )
 
 def validator(transcribed_text, user_content):
-
     prompt = (
         "You are an AI tasked with analyzing and evaluating content alignment and relevance. Below are summaries of a YouTube video transcription and a contextual news article. "
         "Your tasks are:\n"
@@ -28,7 +25,7 @@ def validator(transcribed_text, user_content):
 
     try:
         completion = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+            model="llama-3.3-70b-versatile",
             messages=[{"role":"user","content":prompt}],
             temperature=0.5,
             top_p=1,
@@ -37,17 +34,12 @@ def validator(transcribed_text, user_content):
         )
 
         stt = ""
-
         for chunk in completion:
-
             if not chunk.choices:
                 continue
-
             delta = chunk.choices[0].delta
-
             if not delta:
                 continue
-
             if hasattr(delta, "content") and delta.content:
                 stt += delta.content
 
