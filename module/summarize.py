@@ -1,7 +1,10 @@
-import groq
+from openai import OpenAI
 import streamlit as st
 
-client = groq.Groq(api_key=st.secrets["GROQ_API_KEY"])
+client = OpenAI(
+    base_url="https://api.groq.com/openai/v1",
+    api_key=st.secrets["GROQ_API_KEY"]
+)
 
 def sumup(a):
     con = """You are an advanced text summarization model. Your task is to provide a concise, factual summary of the input text provided below. 
@@ -11,7 +14,7 @@ SUMMARY REQUIRED:
 """ + str(a)
 
     completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-20b",
         messages=[{"role":"user","content":con}],
         temperature=0.2,
         top_p=0.7,
@@ -21,6 +24,7 @@ SUMMARY REQUIRED:
     s = ""
     for chunk in completion:
         if chunk.choices[0].delta.content is not None:
+            print(chunk.choices[0].delta.content, end="")
             s += chunk.choices[0].delta.content
     return s
 
@@ -39,7 +43,7 @@ def extract_claim(a):
     """ + str(a)
 
     completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-20b",
         messages=[{"role":"user","content":con}],
         temperature=0.2,
         top_p=0.7,
